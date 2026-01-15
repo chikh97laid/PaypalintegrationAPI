@@ -58,7 +58,7 @@ To set up and run the project on your local machine, follow these steps:
 
 > ### **1️⃣ Clone the Repository**
 > ```bash
-> git clone [https://github.com/chikh97laid/PayPalIntegrationAPI.git](https://github.com/chikh97laid/PayPalIntegrationAPI.git)
+> git clone https://github.com/chikh97laid/PayPalIntegrationAPI.git
 > cd PayPalIntegrationAPI
 > ```
 >
@@ -87,8 +87,8 @@ To set up and run the project on your local machine, follow these steps:
 
 ## 🔗 Useful Links
 
-* **GitHub:** [https://github.com/chikh97laid](https://github.com/chikh97laid)
-* **LinkedIn:** [https://linkedin.com/in/chikhouladlaid](https://linkedin.com/in/chikhouladlaid)
+* **GitHub:** https://github.com/chikh97laid
+* **LinkedIn:** https://linkedin.com/in/chikhouladlaid
 
 ---
 
