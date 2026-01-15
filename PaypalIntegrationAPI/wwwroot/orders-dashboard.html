@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Orders Dashboard</title>
+  <style>
+    body{font-family:Segoe UI,Arial;margin:20px}
+    table{border-collapse:collapse;width:100%}
+    th,td{border:1px solid #ddd;padding:8px;text-align:left}
+    th{background:#f4f4f4}
+    .muted{color:#666;font-size:0.9rem}
+  </style>
+</head>
+<body>
+  <h1>Orders Dashboard</h1>
+  <p class="muted">Displays all orders from the database.</p>
+  <div style="margin-bottom: 12px;">
+    <button id="refresh">Refresh</button>
+    <button id="delete-btn" style="margin-left: 8px; background-color: #b00020; color: white; padding: 8px 16px; border: none; cursor: pointer; border-radius: 4px;">Delete Selected</button>
+  </div>
+  <div id="error" style="color:#b00020;margin-top:8px"></div>
+  <div style="margin-top:12px;overflow:auto">
+    <table id="orders-table">
+      <thead>
+        <tr>
+          <th><input type="checkbox" id="select-all" /></th>
+          <th>Id</th>
+          <th>PayPalOrderId</th>
+          <th>CreatedAt (UTC)</th>
+          <th>Status</th>
+          <th>Total</th>
+          <th>Currency</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script>
+    const tbody = document.querySelector('#orders-table tbody');
+    const errorEl = document.getElementById('error');
+    const refreshBtn = document.getElementById('refresh');
+    const deleteBtn = document.getElementById('delete-btn');
+    const selectAllCheckbox = document.getElementById('select-all');
+    let orders = [];
+
+    async function loadOrders() {
+      errorEl.textContent = '';
+      tbody.innerHTML = '<tr><td colspan="7">Loading...</td></tr>';
+      try {
+        const res = await fetch('/api/orders');
+        if (!res.ok) throw new Error('Network response was not ok: ' + res.status);
+        orders = await res.json();
+        if (!Array.isArray(orders)) throw new Error('Invalid response format');
+
+        if (orders.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7">No orders found</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = orders.map((o, idx) => `
+          <tr>
+            <td><input type="checkbox" class="order-checkbox" data-order-id="${escapeHtml(o.id)}" /></td>
+            <td>${escapeHtml(o.id)}</td>
+            <td>${escapeHtml(o.payPalOrderId ?? '')}</td>
+            <td>${escapeHtml(new Date(o.createdAt).toISOString())}</td>
+            <td>${escapeHtml(o.status)}</td>
+            <td>${escapeHtml(o.totalAmount)}</td>
+            <td>${escapeHtml(o.currency ?? '')}</td>
+          </tr>
+        `).join('');
+        
+        // Re-attach event listeners for checkboxes
+        attachCheckboxListeners();
+      } catch (err) {
+        console.error(err);
+        errorEl.textContent = 'Failed to load orders: ' + (err.message || err);
+        tbody.innerHTML = '';
+      }
+    }
+
+    function attachCheckboxListeners() {
+      const checkboxes = document.querySelectorAll('.order-checkbox');
+      checkboxes.forEach(cb => {
+        cb.addEventListener('change', updateSelectAllCheckbox);
+      });
+    }
+
+    function updateSelectAllCheckbox() {
+      const checkboxes = document.querySelectorAll('.order-checkbox');
+      const allChecked = checkboxes.length > 0 && Array.from(checkboxes).every(cb => cb.checked);
+      selectAllCheckbox.checked = allChecked;
+    }
+
+    selectAllCheckbox.addEventListener('change', function() {
+      const checkboxes = document.querySelectorAll('.order-checkbox');
+      checkboxes.forEach(cb => {
+        cb.checked = this.checked;
+      });
+    });
+
+    deleteBtn.addEventListener('click', async function() {
+      const checkboxes = document.querySelectorAll('.order-checkbox:checked');
+      if (checkboxes.length === 0) {
+        errorEl.textContent = 'Please select at least one order to delete';
+        return;
+      }
+
+      if (!confirm(`Are you sure you want to delete ${checkboxes.length} order(s)?`)) {
+        return;
+      }
+
+      const orderIds = Array.from(checkboxes).map(cb => cb.getAttribute('data-order-id'));
+      
+      try {
+        const res = await fetch('/api/orders/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(orderIds)
+        });
+        if (!res.ok) throw new Error('Failed to delete orders');
+        errorEl.textContent = '';
+        loadOrders();
+      } catch (err) {
+        console.error(err);
+        errorEl.textContent = 'Failed to delete orders: ' + (err.message || err);
+      }
+    });
+
+    function escapeHtml(s) {
+      return String(s)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    refreshBtn.addEventListener('click', loadOrders);
+    window.addEventListener('load', loadOrders);
+  </script>
+</body>
+</html>

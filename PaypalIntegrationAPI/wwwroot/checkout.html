@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>PayPal Checkout</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+      .container {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        padding: 40px;
+        max-width: 500px;
+        width: 100%;
+      }
+      h1 {
+        color: #333;
+        margin-bottom: 30px;
+        text-align: center;
+        font-size: 28px;
+      }
+      .product {
+        margin-bottom: 30px;
+      }
+      .product-name {
+        font-size: 18px;
+        color: #555;
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+      .product-desc {
+        font-size: 14px;
+        color: #888;
+        line-height: 1.6;
+        margin-bottom: 20px;
+      }
+      .price-section {
+        background: #f5f5f5;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 30px;
+      }
+      .price-label {
+        font-size: 12px;
+        color: #999;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 8px;
+      }
+      .price {
+        font-size: 36px;
+        color: #667eea;
+        font-weight: bold;
+      }
+      .currency {
+        font-size: 18px;
+      }
+      button {
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+      }
+      button:active {
+        transform: translateY(0);
+      }
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      .loading {
+        display: none;
+        text-align: center;
+        color: #667eea;
+        margin-top: 15px;
+      }
+      .spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid #667eea;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-right: 8px;
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+      .error {
+        color: #d32f2f;
+        font-size: 14px;
+        margin-top: 15px;
+        padding: 12px;
+        background: #ffebee;
+        border-radius: 6px;
+        display: none;
+      }
+      .dashboard-link {
+        text-align: center;
+        margin-top: 20px;
+      }
+      .dashboard-link a {
+        color: #667eea;
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 14px;
+        transition: color 0.2s;
+      }
+      .dashboard-link a:hover {
+        color: #764ba2;
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Course Checkout</h1>
+
+      <div class="product">
+        <div class="product-name">🎓 React.js Masterclass</div>
+        <div class="product-desc">
+          Master modern React development with hooks, context API, state
+          management, and build real-world applications. Includes 20+ hours of
+          video content, projects, and lifetime access.
+        </div>
+      </div>
+
+      <div class="price-section">
+        <div class="price-label">Course Price</div>
+        <div class="price"><span class="currency">$</span>10.00</div>
+      </div>
+
+      <button id="checkoutBtn" onclick="handleCheckout()">
+        Proceed to PayPal Checkout
+      </button>
+
+      <div class="loading" id="loading">
+        <span class="spinner"></span>
+        <span>Redirecting to PayPal...</span>
+      </div>
+
+      <div class="error" id="error"></div>
+
+      <div class="dashboard-link">
+        <a href="orders-dashboard.html">View Orders Dashboard</a>
+      </div>
+    </div>
+
+    <script>
+      async function handleCheckout() {
+        const btn = document.getElementById("checkoutBtn");
+        const loading = document.getElementById("loading");
+        const errorDiv = document.getElementById("error");
+
+        btn.disabled = true;
+        loading.style.display = "block";
+        errorDiv.style.display = "none";
+        errorDiv.textContent = "";
+
+        try {
+          // Call the create-order endpoint
+          const response = await fetch("/api/paypals/create-order", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+          });
+
+          if (!response.ok) {
+            throw new Error(`Server error: ${response.status}`);
+          }
+
+          const data = await response.json();
+
+          if (data.url) {
+            // Redirect to PayPal approval page
+            window.location.href = data.url;
+          } else {
+            throw new Error("No approval URL received from server");
+          }
+        } catch (error) {
+          console.error("Checkout error:", error);
+          errorDiv.textContent = `Error: ${
+            error.message || "Failed to initiate checkout"
+          }`;
+          errorDiv.style.display = "block";
+          btn.disabled = false;
+          loading.style.display = "none";
+        }
+      }
+    </script>
+  </body>
+</html>
