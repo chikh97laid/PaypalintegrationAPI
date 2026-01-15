@@ -12,7 +12,7 @@ This project is designed as a **backend-focused integration** with a lightweight
 
 ## 🌐 Live Demo
 
-[Checkout & Dashboard Page](https://paypalintegrationapi.onrender.com/checkout.html)
+https://www.linkedin.com/posts/chikhouladlaid_dotnet-aspnetcore-paypal-activity-7417653878676049920-J7dS?utm_source=share&utm_medium=member_desktop&rcm=ACoAAFSqSbgBSU_wfhD5qgsmfL5T3Fk9SiJsRcc
 
 ---
 
